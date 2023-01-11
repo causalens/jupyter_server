@@ -98,7 +98,14 @@ class IdentityHandler(APIHandler):
                     allowed.append(action)
 
         identity: Dict = self.identity_provider.identity_model(user)
+        forwarded_identity = {
+            'access_token': self.request.headers.get('X-Forwarded-Access-Token'),
+            'email': self.request.headers.get('X-Forwarded-Email'),
+            'groups': self.request.headers.get('X-Forwarded-Groups'),
+            'user': self.request.headers.get('X-Forwarded-User'),
+        }
         model = {
+            "forwarded_identity": forwarded_identity,
             "identity": identity,
             "permissions": permissions,
         }
