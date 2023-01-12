@@ -20,7 +20,6 @@ __pycache__
 .DS_Store
 \#*#
 .#*
-.venv
 .coverage*
 .pytest_cache
 src
