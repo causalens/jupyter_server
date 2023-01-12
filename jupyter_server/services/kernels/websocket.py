@@ -1,6 +1,7 @@
 """Tornado handlers for WebSocket <-> ZMQ sockets."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import json
 
 from tornado import web
 from tornado.websocket import WebSocketHandler
@@ -74,6 +75,20 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     def on_message(self, ws_message):
         """Get a kernel message from the websocket and turn it into a ZMQ message."""
+
+        # For execute_request messages then add token to environment that's being executed
+        if isinstance(ws_message, str):
+            try:
+                message = json.loads(ws_message)
+                is_execute_request = message.get('header', {}).get('msg_type') == 'execute_request'
+                if is_execute_request and message.get('content', {}).get('code') is not None:
+                    message['content']['code'] = f"import os\nos.environ['FORWARDED_ACCESS_TOKEN'] = " \
+                                                 f"'{self.request.headers.get('X-Forwarded-Access-Token')}'\n" \
+                                                 f"{message['content']['code']}"
+                ws_message = json.dumps(message)
+            except Exception:
+                pass
+
         self.connection.handle_incoming_message(ws_message)
 
     def on_close(self):
