@@ -81,9 +81,10 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
             try:
                 message = json.loads(ws_message)
                 is_execute_request = message.get('header', {}).get('msg_type') == 'execute_request'
-                if is_execute_request and message.get('content', {}).get('code') is not None:
+                token = self.request.headers.get('X-Forwarded-Access-Token')
+                if is_execute_request and token is not None and message.get('content', {}).get('code') is not None:
                     message['content']['code'] = f"import os\nos.environ['FORWARDED_ACCESS_TOKEN'] = " \
-                                                 f"'{self.request.headers.get('X-Forwarded-Access-Token')}'\n" \
+                                                 f"'{token}'\n" \
                                                  f"{message['content']['code']}"
                 ws_message = json.dumps(message)
             except Exception:
